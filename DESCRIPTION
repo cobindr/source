@@ -1,0 +1,12 @@
+Package:     cobindR
+Title: 	     Finding Co-occuring motifs of transcription factor binding sites
+Description: Finding and analysing co-occuring motifs of transcription factor binding sites in groups of genes
+Version:     0.99.09
+Date:	     2013-07-09
+Author:	     Manuela Benary, Stefan Kroeger, Yuehien Lee, Robert Lehmann
+Maintainer:  Manuela Benary <manuela.benary@cms.hu-berlin.de>
+License:     Artistic-2.0
+Imports:     yaml, seqinr, Biostrings, biomaRt, BSgenome, methods, gmp, mclust, rtfbs, gplots, IRanges
+Suggests:    RUnit, BiocGenerics
+Enhances:    rGADEM, seqLogo, genoPlotR, parallel, VennDiagram, RColorBrewer, vcd, MotifDb, snowfall
+biocViews:   ChiPseq, CellBiology, MultipleComparisons, SequenceMatching

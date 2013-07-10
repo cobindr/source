@@ -1,0 +1,62 @@
+importFrom('seqinr',
+           write.fasta)
+
+importFrom('yaml',
+           as.yaml,
+           yaml.load_file)
+
+importFrom('gplots',
+           heatmap.2,
+           colorpanel)
+
+importFrom('mclust',
+           Mclust,
+           mclust2Dplot,
+           mclustBIC)
+
+exportClasses(cobindr, configuration, SeqObj)
+
+exportMethods(detrending,
+              find.pairs, get.bindingsite.ranges,
+              plot.detrending,
+              plot.gc,
+              plot.pairdistance,
+              plot.positionprofile,
+              plot.positions,
+              plot.positions.simple,
+              plot.tfbs.heatmap,
+              plot.tfbs.venndiagram,
+              plot.tfbslogo,
+              predicted2pwm,
+              rtfbs, search.gadem, search.pwm,
+              testCpG,
+              write.bindingsites,
+              write.bindingsites.table,
+              get.pairs,
+              write.sequences,
+              get.significant.pairs,
+uid, name, sequences, bg_sequences, desc, configuration,
+ pfm, binding_sites, bg_binding_sites, pairs, bg_pairs, 
+pairs_of_interest, species, location, comment, sequence,
+ experiment_description, id, sequence_source, 
+sequence_origin, sequence_type, bg_sequence_source, 
+bg_sequence_type, bg_sequence_origin, downstream, 
+upstream, max_distance, pairs, pfm_path, threshold, 
+fdrThreshold, path, mart, pseudocount, pValue)
+
+exportPattern("*.<-")
+
+export(read.transfac.pfm,
+       generate.background,
+		cobindr, seqObj, cobindRConfiguration)
+
+# Import all packages listed as Imports or Depends
+import(
+  biomaRt,
+  methods,
+  gmp,
+  Biostrings,
+  BSgenome,
+  rtfbs,
+  IRanges
+)

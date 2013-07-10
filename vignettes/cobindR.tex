@@ -1,0 +1,157 @@
+%##########################################
+% TODO: 
+% - PFM input formate besser beschreiben
+% - background optionen besser beschreiben/vergleichen
+% - besseres model fuer sequence-hitverteilung
+%##########################################
+
+
+\documentclass{article}
+\usepackage{Sweave}
+\begin{document}
+
+\input{cobindR-concordance}
+
+
+%\VignetteIndexEntry{Using cobindR} \\
+\title{cobindR package vignette}
+\maketitle
+Many transcription factors (TFs) regulate gene expression by binding to specific DNA motifs near genes. Often the regulation of gene expression is not only controlled by one TF, but by many TFs together, that can either interact in a cooperative manner or interfere with each other. In recent years high thoughput methods, like ChIP-Seq, have become available to produce large amounts of data, that contain potential regulatory regions. \textit{In silico} analysis of trancription factor binding sites can help to interpret these enormous datasets in a convenient and fast way or narrow down the results to the most significant regions for further experimental studies.
+
+cobindR provides a complete set of methods to analyse and detect pairs of TFs, including support of diverse input formats and different background models for statistical testing. Several visualization tools are implemented to ease the interpretation of the results. Here we will use a case study to demonstrate how to use cobindR and its various methods properly to detect the TF pair Sox2 and Oct4.
+
+cobindR needs to be loaded together with the package Biostring, which provides methods for sequence manipulation.
+
+\begin{Schunk}
+\begin{Sinput}
+> library(cobindR)
+> library(Biostrings)
+\end{Sinput}
+\end{Schunk}
+
+\section{Configuration}
+Before starting the analysis, it is recommended to create a configuration file in YAML format, that contain all the parameters of the \textit{in silico} experiment. The initial step in cobindR is to create a configuration instance.
+
+\begin{Schunk}
+\begin{Sinput}
+> #run cobindR
+> cfg <- new('configuration', fname = 
++              system.file('extdata/config_default.yml',
++              package='cobindR'))
+\end{Sinput}
+\begin{Soutput}
+Reading the configuration file:  C:/Users/s.kroeger/Documents/R/win-library/2.15/cobindR/extdata/config_default.yml 
+\end{Soutput}
+\end{Schunk}
+
+\subsection*{Parameter settings}
+When creating a configuration instance without a configuration file, a warning is issued. The configuration instance will then contain the default settings, that usually needs subsequent adjustment.
+
+\begin{Schunk}
+\begin{Sinput}
+> #run cobindR
+> cfg <- new('configuration')
+\end{Sinput}
+\end{Schunk}
+
+The folder containing the binding motifs in PFM files has to be provided. All valid PFM files in the specified folder are loaded. Files ending with "*.pfm" or "*.cm" should be in the jaspar database format. Files ending with "*.tfpfm" need to have the Transfac database format.
+
+\begin{Schunk}
+\begin{Sinput}
+> slot(cfg, 'pfm_path') <- 
++   system.file('extdata/pfms',package='cobindR')
+\end{Sinput}
+\end{Schunk}
+
+The set of pairs for the co-binding analysis should be given as a list. Each pair should contain the motif names as provided in the PFM files. The order of the motif names in the pair is irrelevant.
+
+\begin{Schunk}
+\begin{Sinput}
+> slot(cfg, 'pairs') <- c('ES_Sox2_1_c1058 ES_Oct4_1_c570')
+\end{Sinput}
+\end{Schunk}
+
+Alternatively, the package MotifDb can be used to retrieve the PWMs. To use MotifDb the parameter \texttt{pfm\_path} should be set to 'MotifDb'. The pairs should then be given in the following format:  \texttt{source:name}. E.g. JASPAR\_CORE:KLF4, where JASPAR\_CORE is the source and KLF4 is the transcription factor name.
+
+\begin{Schunk}
+\begin{Sinput}
+> slot(cfg, 'pfm_path') <- 'MotifDb'
+> slot(cfg, 'pairs') <- c('JASPAR_CORE:CREB1 JASPAR_CORE:KLF4',
++ 		'JASPAR_CORE:CREB1 JASPAR_CORE:KLF4')
+\end{Sinput}
+\end{Schunk}
+
+
+
+The parameters \texttt{sequence\_type}, \texttt{sequence\_source} and 
+\texttt{sequence\_origin} are used to configure the sequence input of the 
+experiment. In this example \texttt{sequence\_type} is set to 'fasta' to use sequences saved in fasta format. Other possibilites for \texttt{sequence\_type} are "geneid" or "chipseq". In this case, where fasta is the input source, \texttt{sequence\_source} should contain the path of the fasta file. Comments regarding the sequence can be written to \texttt{sequence\_origin}.
+
+\begin{Schunk}
+\begin{Sinput}
+> slot(cfg, 'sequence_type') <- 'fasta'
+> slot(cfg, 'sequence_source') <- system.file('extdata/sox_oct_example_vignette_seqs.fasta',
++                                             package='cobindR')
+> slot(cfg, 'sequence_origin') <- 'Mouse Embryonic Stem Cell Example ChIP-Seq Oct4 Peak Sequences'
+> slot(cfg, 'species') <- 'Mus musculus'
+\end{Sinput}
+\end{Schunk}
+
+When the \texttt{sequence\_type} is set to "geneid" then \texttt{sequence\_source} should contain the path of a file that contains a plain list of ENSEMBL gene identifiers. The parameters \texttt{downstream} and 
+\texttt{upstream} define the downstream and upstream region of the TSS that should be extracted. In this case mouse genes are analysed, so it is important to set the parameter \texttt{species} to "Mus musculus". If human sequences are used \texttt{species} should be set to "Homo sapiens". For other species see http://www.ensembl.org/info/about/species.html.
+
+\begin{Schunk}
+\begin{Sinput}
+> tmp.geneid.file <- tempfile(pattern = "cobindR_sample_seq", 
++                      tmpdir = tempdir(), fileext = ".txt")
+> write(c('#cobindR Example Mouse Genes','ENSMUSG00000038518',
++ 		'ENSMUSG00000042596','ENSMUSG00000025927'),
++ 		file = tmp.geneid.file)
+> slot(cfg, 'species') <- 'Mus musculus'
+> slot(cfg, 'sequence_type') <- 'geneid'
+> slot(cfg, 'sequence_source') <- tmp.geneid.file
+> slot(cfg, 'sequence_origin') <- 'ENSEMBL genes'
+> slot(cfg, 'upstream') <- slot(cfg, 'downstream') <- 500
+\end{Sinput}
+\end{Schunk}
+
+When the \texttt{sequence\_type} is set to "chipseq" then \texttt{sequence\_source} should contain the path of a file in bed format. Since the sequences are obtained from the BSgenome package, the BSgenome  
+species name together with its assembly number must be specified in the 
+configuration value \texttt{species}.
+
+\begin{Schunk}
+\begin{Sinput}
+> slot(cfg, 'sequence_type') <- 'chipseq'
+> slot(cfg, 'sequence_source') <- 
++   system.file('extdata/ucsc_example_ItemRGBDemo.bed',
++ 				package='cobindR')
+> slot(cfg, 'sequence_origin') <- 'UCSC bedfile example'
+> slot(cfg, 'species') <- 'BSgenome.Mmusculus.UCSC.mm9'
+\end{Sinput}
+\end{Schunk}
+
+Background sequences can either be provided by the user by setting the option 
+\texttt{bg\_sequence\_type} to  "geneid" or "chipseq"; or artificial sequences can be 
+generated automatically using a Markov model ("markov"), via local shuffling of the input sequences ("local") or via the program ushuffle ("ushuffle").
+
+In the case of "local" shuffling each input sequence is divided into small windows (e.g. window of 10bp length). The shuffling is then only done within each window. That way the nucleotide composition of the foreground is locally conserved.
+
+In order to use ushuffle (http://digital.cs.usu.edu/\~{}mjiang/ushuffle/) 
+it must be installed separately on your machine and be callable from the command line using "ushuffle". For this purpose download ushuffle and compile it as it is described on its website. Then rename "main.exe" to "ushuffle" and move it to your bin folder.
+
+The options for the background generation are given in the following format: \texttt{model.k.n}, whereas model is either "markov", "local" or "ushuffle". In case of "markov" k determines the length of the markov chain, in case of "local" k determines the window length and for "ushuffle" k determines the k-let counts that should be preserved from the input sequences (see ushuffle website for more details). n determines the number of background sequences that should be created.
+
+\begin{Schunk}
+\begin{Sinput}
+> slot(cfg, 'bg_sequence_type') <-  'markov.3.200'# or 'ushuffle.3.3000' or 'local.10.1000'
+\end{Sinput}
+\end{Schunk}
+
+
+\section{Finding pairs of transcription factors}
+After creating a valid configuration object, a cobindr object has to be created to start the analysis of transcription factor pairs. In this example, the PWM matching functionality of the Biostrings package is applied via the function \texttt{search.pwm}. The "min.score" option is the threshold for the binding site detection (see Biostrings manual for more detail). Here the threshold is set to 80\% of the highest possible score for a given PWM. \texttt{find.pairs} is then used to find pairs of binding sites.
+
+\begin{Schunk}
+\begin{Sinput}
+> cobindR.bs <- new('cobindr', cfg, 
++               name='cobind test using sampled sequences')

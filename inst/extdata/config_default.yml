@@ -1,0 +1,26 @@
+#
+# general information
+experiment_description: default experiment
+# sequence information
+sequence_source:
+- example.fasta
+sequence_type:   fasta  #chipseq, geneid or fasta
+sequence_origin: default analysis 
+# background information - no background available
+bg_sequence_type: markov.3.
+bg_sequence_origin: simulated
+bg_sequence_source: markov model of order 3
+# species information
+species:         hsapiens
+# binding site prediction detail
+downstream: 500
+upstream:   500
+threshold:     1.0      # searchPWM parameter
+fdrThreshold:  0        # rtfbs parameter, 0 means off
+pfm_path:   ./pfms
+# pair search parameters
+max_distance:   200
+mart:   ensembl
+pseudocount: 1
+pValue: 2e-04
+pairs: all
