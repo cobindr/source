@@ -7,6 +7,10 @@
 
 
 \documentclass{article}
+<<style, eval=TRUE, echo=FALSE, results=tex>>=
+BiocStyle::latex()
+@
+
 \begin{document}
 
 \SweaveOpts{concordance=TRUE}
