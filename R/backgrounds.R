@@ -186,7 +186,8 @@ function(x) {
 		# TODO: define name from fasta sequence
 		#      find location based on sequence or fasta information
 		for(i in 1:length(fasta.seqs)) {
-			id = paste(x@species,x@bg_sequence_type,x@bg_sequence_origin,Sys.time(),seq.iterator,sep='_')
+			#id = paste(x@species,x@bg_sequence_type,x@bg_sequence_origin,Sys.time(),seq.iterator,sep='_')
+			id = as.character(i)
 			new.seq = new('SeqObj', 
 					seq = fasta.seqs[[i]],
 					id     = id,
