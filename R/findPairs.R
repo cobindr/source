@@ -364,18 +364,24 @@ get.detrending_intern = function(pwm1, pwm2, sequences, abs.distance, pairs, x, 
     if (abs.distance) {
         pairs_cache = pairs[pairs$pair == pair_positive & pairs$distance >= x - bin_length + 1 - overlap & pairs$distance < x + 1 - overlap, ]
         
-        pairs_cache = rbind(pairs_cache, pairs[pairs$pair == pair_negative & pairs$distance >= x - bin_length + 1 - overlap & pairs$distance < x + 1 - overlap, ])
+        if (pwm1 != pwm2) {
+            pairs_cache = rbind(pairs_cache, pairs[pairs$pair == pair_negative & pairs$distance >= x - bin_length + 1 - overlap & pairs$distance < x + 1 - overlap, ])
+        }
     }
     else {
         if (x > 0) {
             pairs_cache = pairs[pairs$pair == pair_positive & pairs$distance >= x - bin_length + 1 - overlap & pairs$distance < x + 1 - overlap & pairs$strand1 == 1, ]
             
-            pairs_cache = rbind(pairs_cache, pairs[pairs$pair == pair_negative & pairs$distance >= x - bin_length + 1 - overlap & pairs$distance < x + 1 - overlap & pairs$strand2 == 2, ])
+            if (pwm1 != pwm2) {
+                pairs_cache = rbind(pairs_cache, pairs[pairs$pair == pair_negative & pairs$distance >= x - bin_length + 1 - overlap & pairs$distance < x + 1 - overlap & pairs$strand2 == 2, ])
+            }
         }
         else {
             pairs_cache = pairs[pairs$pair == pair_positive & pairs$distance >= -x - bin_length + 1 - overlap & pairs$distance < -x + 1 - overlap & pairs$strand1 == 2, ]
             
-            pairs_cache = rbind(pairs_cache, pairs[pairs$pair == pair_negative & pairs$distance >= -x - bin_length + 1 - overlap & pairs$distance < -x + 1 - overlap & pairs$strand2 == 1, ])
+            if (pwm1 != pwm2) {
+                pairs_cache = rbind(pairs_cache, pairs[pairs$pair == pair_negative & pairs$distance >= -x - bin_length + 1 - overlap & pairs$distance < -x + 1 - overlap & pairs$strand2 == 1, ])
+            }
         }
     }
     
