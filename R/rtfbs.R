@@ -61,7 +61,7 @@ function(x, append=F, background_scan = FALSE, n.cpu=NA) {
 	if(nrow(binding_sites) > 0) {
         # converting to dataframe
 	    binding_sites.df = data.frame(uid = as.numeric(1:nrow(binding_sites)))
-	    binding_sites.df = cbind(binding_sites.df, seqObj_uid = as.numeric(binding_sites[, 2]))
+	    binding_sites.df = cbind(binding_sites.df, seqObj_uid = factor(binding_sites[, 2]))
 	    binding_sites.df = cbind(binding_sites.df, pwm = factor(binding_sites[, 3]))
 	    binding_sites.df = cbind(binding_sites.df, start = as.numeric(binding_sites[, 4]))
 	    binding_sites.df = cbind(binding_sites.df, end = as.numeric(binding_sites[, 5]))
