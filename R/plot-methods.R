@@ -186,9 +186,9 @@ function(x, pwms, include.empty.seqs=FALSE) {
 # if a file path is specified in pdf.name, the diagram will be written into the specified file
 
 setMethod("plot.detrending", signature(x="cobindr"),
-function(x, pwm1, pwm2, bin_length=20, z_value=3, overlap=0, abs.distance=FALSE) {
+function(x, pwm1, pwm2, bin_length=20, z_value=3, overlap=0, abs.distance=FALSE, background.on=TRUE) {
   
-  results = detrending(x, pwm1, pwm2, bin_length, overlap, abs.distance)
+  results = detrending(x, pwm1, pwm2, bin_length, overlap, abs.distance, background.on)
   
  # if detreding could not be preformed, return with NULL
   if(is.null(results)) {

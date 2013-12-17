@@ -58,5 +58,6 @@ import(
   Biostrings,
   BSgenome,
   rtfbs,
-  IRanges
+  IRanges,
+  data.table
 )

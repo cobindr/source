@@ -50,6 +50,7 @@ function(x, background_scan, n.cpu = NA) {
 	func.opt <- list(target_sequences, binding_sites, x@configuration@max_distance)
 	res <- parallelize(func.name, poi, func.opt, n.cpu)
 	pairs = do.call(rbind, res)
+	#print(pairs)
 	## old <slow> version
 	# ####
 	# lapply version of slow
@@ -179,33 +180,39 @@ find.pairs_intern <- function(x, opts) {
 	cat('Searching for pair', pair_of_interest_sorted, '.\n')
 	# get only binding sites froms pair of interest
 
-	bs_filtered1 = binding_sites[binding_sites$pwm == pwm1,]
-	bs_filtered2 = binding_sites[binding_sites$pwm == pwm2,]
+	if (pwm1 == pwm2) {
+    	bs_filtered = binding_sites[J(pwm1), nomatch=0]
 	
-	if(nrow(bs_filtered1) == 0 || nrow(bs_filtered2) == 0 ) return(pairs_cache)
+	    if(nrow(bs_filtered) <= 1) return(pairs_cache)
+	    
+	    inter_seqObj = unique(bs_filtered[, seqObj_uid])
+	    
+	    setkey(bs_filtered, seqObj_uid)
+	}
+	else {	
+	    bs_filtered1 = binding_sites[J(pwm1), nomatch=0]
+	    bs_filtered2 = binding_sites[J(pwm2), nomatch=0]
 	
-	inter_seqObj = intersect(bs_filtered1$seqObj_uid, bs_filtered2$seqObj_uid)
-# 	bs_filtered = unique(rbind(bs_filtered1[match(inter_seqObj,bs_filtered1$seqObj_uid),],bs_filtered2[match(inter_seqObj,bs_filtered2$seqObj_uid),]))
-	bs_filtered = unique(rbind(bs_filtered1[bs_filtered1$seqObj_uid %in% inter_seqObj, ], bs_filtered2[bs_filtered2$seqObj_uid %in% inter_seqObj, ]))
-
-	# check if pwm's share bs in same sequences if not return empty set
-	if (nrow(bs_filtered) == 0) return(pairs_cache)
-
-	uid_vec = sapply(target_sequences, function(seq) slot(seq,"uid"))
-	seqObj_bs = target_sequences[match(unique(bs_filtered$seqObj_uid), uid_vec)]
-
-	found = lapply(seqObj_bs, function(seq) {
-		bs = bs_filtered[bs_filtered$seqObj_uid == slot(seq, "uid"),]
-		
+	    if(nrow(bs_filtered1) == 0 || nrow(bs_filtered2) == 0 ) return(pairs_cache)
+	
+	    inter_seqObj = intersect(bs_filtered1[, seqObj_uid], bs_filtered2[, seqObj_uid])
+	
+	    # check if pwm's share bs in same sequences if not return empty set
+	    if (length(inter_seqObj) == 0) return(pairs_cache)
+	
+	    bs_filtered = rbind(bs_filtered1[J(pwm1, inter_seqObj), nomatch=0], bs_filtered2[J(pwm2, inter_seqObj), nomatch=0])
+        setkey(bs_filtered, seqObj_uid)
+    }
+	
+	found = lapply(inter_seqObj, function(seq_id) {
 		# sort binding sites after start position, very important !!!
-# 		bs = bs[with(bs, order(start, pwm)), ]
-#		bs[with(bs, order(get('start'), get('pwm'))), ]
-		bs = bs[with(bs, order(get('start'), get('pwm'))), ]
-
-		 # find pairs
+		bs = as.data.frame(bs_filtered[J(seq_id), nomatch=0][order(start, pwm)])
+		
 		if(nrow(bs) < 2) return(pairs_cache)
-        for (i in 1:(nrow(bs) - 1)) {
-            for (k in (i+1):nrow(bs)) {
+
+		# find pairs
+		found2 = lapply(1:(nrow(bs)-1), function(i) {
+		    for(k in (i+1):nrow(bs)) {
                 distance_between_bs = bs[k, 'start'] - bs[i, 'end']
                 # check if pair is within range
                 if (distance_between_bs >= max_distance && max_distance > 0) {
@@ -220,9 +227,11 @@ find.pairs_intern <- function(x, opts) {
                     # save pair to matrix
                     pairs_cache = rbind(pairs_cache, c(1, bs[k, 'seqObj_uid'], paste(c(as.character(bs[i, 'pwm']), as.character(bs[k, 'pwm'])), collapse=' '), bs[i, 'strand'], bs[k, 'strand'], bs[i, 'uid'], bs[k, 'uid'], distance_between_bs))
                 }
+                
             }
-        }
-		return(pairs_cache)
+            return(pairs_cache)
+        })
+		return(do.call(rbind, found2))
 	})
 	return(do.call(rbind, found))
 }
@@ -386,11 +395,11 @@ get.detrending_intern = function(pwm1, pwm2, sequences, abs.distance, pairs, x, 
     }
     
     for (tt in 1:nrow(pairs_cache)) {
-        bs1 = binding_sites[binding_sites$uid == pairs_cache[tt, 'bs_uid1'], ]
-        bs2 = binding_sites[binding_sites$uid == pairs_cache[tt, 'bs_uid2'], ]
+        bs1 = binding_sites[binding_sites$uid == pairs_cache[tt, bs_uid1], ]
+        bs2 = binding_sites[binding_sites$uid == pairs_cache[tt, bs_uid2], ]
 
-        if (seqUID[as.character(pairs_cache[tt, 'seqObj_uid'])] != 'unknown') {
-            location = unlist(strsplit(unlist(seqUID[as.character(pairs_cache[tt, 'seqObj_uid'])]), ':'))
+        if (seqUID[as.character(pairs_cache[tt, seqObj_uid])] != 'unknown') {
+            location = unlist(strsplit(unlist(seqUID[as.character(pairs_cache[tt, seqObj_uid])]), ':'))
 
             loc1 = paste(location[[1]], as.numeric(location[[2]]) + bs1$start - 1, as.numeric(location[[2]]) + bs1$end - 1, sep=':')
             loc2 = paste(location[[1]], as.numeric(location[[2]]) + bs2$start - 1, as.numeric(location[[2]]) + bs2$end - 1, sep=':')
@@ -408,10 +417,10 @@ get.detrending_intern = function(pwm1, pwm2, sequences, abs.distance, pairs, x, 
         }
 
         if (bs1$pwm == pwm1) {
-            pair_bs = rbind(pair_bs, c(pairs_cache[tt, 'seqObj_uid'], bs1$seq, loc1, bs1$strand, bs2$seq, loc2, bs2$strand, pm * pairs_cache[tt, 'distance'], source))
+            pair_bs = rbind(pair_bs, c(pairs_cache[tt, seqObj_uid], bs1$seq, loc1, bs1$strand, bs2$seq, loc2, bs2$strand, pm * pairs_cache[tt, distance], source))
         }
         else {
-            pair_bs = rbind(pair_bs, c(pairs_cache[tt, 'seqObj_uid'], bs2$seq, loc2, bs2$strand, bs1$seq, loc1, bs1$strand, pm * pairs_cache[tt, 'distance'], source))
+            pair_bs = rbind(pair_bs, c(pairs_cache[tt, seqObj_uid], bs2$seq, loc2, bs2$strand, bs1$seq, loc1, bs1$strand, pm * pairs_cache[tt, distance], source))
         }
     }
     
