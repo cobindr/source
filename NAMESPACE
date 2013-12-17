@@ -42,7 +42,7 @@ pairs_of_interest, species, location, comment, sequence,
 sequence_origin, sequence_type, bg_sequence_source, 
 bg_sequence_type, bg_sequence_origin, downstream, 
 upstream, max_distance, pairs, pfm_path, threshold, 
-fdrThreshold, path, mart, pseudocount, pValue)
+fdrThreshold, path, mart, pseudocount, pValue, filter.binding.sites)
 
 exportPattern("*.<-")
 

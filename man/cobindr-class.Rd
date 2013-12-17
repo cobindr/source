@@ -55,6 +55,7 @@ Objects can be created by calls of the form \code{new("cobindr", conf, name, des
     \item{initialize}{\code{signature(.Object = "cobindr")}: ... }
     \item{input.pwm}{\code{signature(object = "cobindr")}: ... }
     \item{plot.detrending}{\code{signature(object = "cobindr")}: ... }
+    \item{filter.binding.sites}{\code{signature(object = "cobindr")}: ... }
     \item{plot.gc}{\code{signature(object = "cobindr")}: ... }
     \item{plot.pairdistance}{\code{signature(object = "cobindr")}: ... }
     \item{plot.pairdistribution}{\code{signature(object = "cobindr")}: ... }

@@ -439,3 +439,56 @@ get.detrending_intern = function(pwm1, pwm2, sequences, abs.distance, pairs, x, 
     
     list(pair_bs, candidates)
 }
+
+
+# This method filters overlapping binding sites of the same transcription factor.
+# Binding sites with higher scores will be prefered.
+setMethod("filter.binding.sites", signature(x="cobindr"),
+function(x, background=FALSE) {
+    if (background == TRUE) {
+        binding_sites = x@bg_binding_sites
+    }
+    else {
+        binding_sites = x@binding_sites
+    }
+    
+    pwms = unique(binding_sites[, pwm])
+    
+    res = lapply(pwms, function(p) {
+        seq_uids = binding_sites[J(p), .N, by=seqObj_uid][, seqObj_uid]
+        
+        if (length(seq_uids != 0)) {
+            res2 = lapply(seq_uids, function(seq_uid) {
+                filtered_bs = data.frame()
+                
+                # sorting binding sites is very important here!
+                bs = as.data.frame(binding_sites[J(p, seq_uid), nomatch=0][order(start, score)])
+                
+                start = -1
+                end = -1
+                
+                for (i in 1:nrow(bs)) {
+                    if (!(bs[i, 'start'] >= start & bs[i, 'start'] <= end)) {
+                        start = bs[i, 'start']
+                        end = bs[i, 'end']
+                        
+                        filtered_bs = rbind(filtered_bs, bs[i, ])
+                    }
+                }
+                
+                return(filtered_bs)
+            })
+            
+            checked_bs = do.call(rbind, res2)
+            return(checked_bs)
+        }
+    })
+    
+    binding_sites = data.table(do.call(rbind, res))
+    setkey(binding_sites, pwm, seqObj_uid)
+    
+    x@binding_sites = binding_sites
+    
+    return(x)
+}
+)

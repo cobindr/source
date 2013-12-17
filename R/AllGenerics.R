@@ -52,6 +52,12 @@ setGeneric (
      name = "find.pairs",
      def  = function(x, background_scan = FALSE, n.cpu = NA){standardGeneric("find.pairs")}
             ) 
+            
+setGeneric (
+     name = "filter.binding.sites",
+     def  = function(x, background = FALSE){standardGeneric("filter.binding.sites")}
+            ) 
+
 # Internal
 # setGeneric (
 #      name = "find.pairs_intern",
