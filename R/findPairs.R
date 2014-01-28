@@ -317,8 +317,8 @@ function(x, background=FALSE) {
 # tsv file. If locations for the sequences are given, binding site locations
 # will be mapped to these locations.
 setMethod ("get.significant.pairs", signature(x="cobindr"),
-function(x, pwm1, pwm2, bin_length=20, z_value=3, overlap=0, abs.distance=FALSE) {
-    results = detrending(x, pwm1, pwm2, bin_length, overlap, abs.distance)
+function(x, pwm1, pwm2, bin_length=20, z_value=3, overlap=0, abs.distance=FALSE, background.on=TRUE) {
+    results = detrending(x, pwm1, pwm2, bin_length, overlap, abs.distance, background.on)
     if(is.null(results)) return() #if detrending failed stop here
     
     x_coord = results[[1]]
